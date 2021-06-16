@@ -7,4 +7,4 @@ mod instruction_arguments;
 
 pub use execute_instruction::ExecuteInstruction;
 pub use instruction::Instruction;
-pub use instruction_arguments::{Address, Immediate, Register};
+pub use instruction_arguments::{Address, Immediate, InstructionArgument, Register};
