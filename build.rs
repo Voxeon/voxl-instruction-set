@@ -106,6 +106,7 @@ fn opcode_header() -> String {
     use crate::{};\n\
     use crate::{};\n\
     use crate::{};\n\
+    use crate::InstructionArgument;\n\
     \n\
     {}\
     \n\
@@ -153,6 +154,16 @@ fn opcode_impl_display_header() -> String {
         "impl core::fmt::Display for {} {{\n\
         \tfn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {{\n\
         \t\t return write!(f, \"{{}}\", match self {{\n",
+        OPCODE_ENUM_NAME
+    );
+}
+
+#[inline]
+fn opcode_impl_into_bytes_header() -> String {
+    return format!(
+        "impl Into<Vec<u8>> for {} {{\n\
+        \t fn into(self) -> Vec<u8> {{\n\
+        \t\t return match self {{\n",
         OPCODE_ENUM_NAME
     );
 }
@@ -286,6 +297,11 @@ fn generate_opcodes() -> MethodDetails {
     file.write_all("\t\t});\n\t}\n}\n\n".as_bytes())
         .expect("Unable to write display tail to file.");
 
+    generate_into_bytes_trait(&mut file, &method_details);
+
+    file.write_all(b"\t\t};\n\t}\n}")
+        .expect("Unable to write into trait tail to file");
+
     return method_details;
 }
 
@@ -339,12 +355,10 @@ fn generate_opcode_from_name_method(base_indent: &[u8], file: &mut File, opcodes
             .expect("Unable to write opcode match line");
     }
 
-    if opcodes.len() != 256 {
-        file.write(base_indent)
-            .expect("Unable to write base indent");
-        file.write(b"\t\t").expect("Unable to write step indent");
-        write!(file, "_ => return None,\n").expect("Unable to write field display information.");
-    }
+    file.write(base_indent)
+        .expect("Unable to write base indent");
+    file.write(b"\t\t").expect("Unable to write step indent");
+    write!(file, "_ => return None,\n").expect("Unable to write field display information.");
 
     file.write(base_indent)
         .expect("Unable to write base indent");
@@ -435,6 +449,97 @@ fn generate_new_opcode_method(inset: &[u8], file: &mut File, opcodes: &MethodDet
 
     file.write(inset).expect("Failed to write inset");
     file.write(b"}\n").expect("Failed to write ending");
+}
+
+fn generate_into_bytes_trait(file: &mut File, opcodes: &MethodDetails) {
+    file.write(opcode_impl_into_bytes_header().as_bytes())
+        .expect("Failed to write bytes header.");
+
+    for (_opcode, fields, variant, _dec) in opcodes {
+        let inset = "\t\t\t";
+
+        file.write(inset.as_bytes())
+            .expect("Unable to write step indent");
+
+        let mut r_count = 0;
+        let mut a_count = 0;
+        let mut i_count = 0;
+
+        for field in fields {
+            if *field == REGISTER_TYPE_NAME {
+                r_count += 1;
+            } else if *field == ADDRESS_TYPE_NAME {
+                a_count += 1;
+            } else if *field == IMMEDIATE_TYPE_NAME {
+                i_count += 1;
+            }
+        }
+
+        let mut fields_string = String::new();
+        let mut rhs_string = format!("{{\n{}\tlet mut v = Vec::new();\n", inset);
+
+        for i in 0..i_count {
+            if i == 0 {
+                fields_string.push_str("i, ");
+                rhs_string.push_str(&format!(
+                    "{}\tv.extend_from_slice(&Into::<[u8; {}::BYTES]>::into(i));\n",
+                    inset, IMMEDIATE_TYPE_NAME
+                ));
+            } else {
+                fields_string.push_str(&format!("i{}, ", i));
+                rhs_string.push_str(&format!(
+                    "{}\tv.extend_from_slice(&Into::<[u8; {}::BYTES]>::into(i{}));\n",
+                    inset, IMMEDIATE_TYPE_NAME, i
+                ));
+            }
+        }
+
+        for i in 0..r_count {
+            if i == 0 {
+                fields_string.push_str("r, ");
+                rhs_string.push_str(&format!("{}\tv.push(r as u8);\n", inset));
+            } else {
+                fields_string.push_str(&format!("r{}, ", i));
+                rhs_string.push_str(&format!("{}\tv.push(r{} as u8);\n", inset, i));
+            }
+        }
+
+        for i in 0..a_count {
+            if i == 0 {
+                fields_string.push_str("a, ");
+                rhs_string.push_str(&format!(
+                    "{}\tv.extend_from_slice(&Into::<[u8; {}::BYTES]>::into(a));\n",
+                    inset, ADDRESS_TYPE_NAME
+                ));
+            } else {
+                fields_string.push_str(&format!("a{}, ", i));
+                rhs_string.push_str(&format!(
+                    "{}\tv.extend_from_slice(&Into::<[u8; {}::BYTES]>::into(a{}));\n",
+                    inset, ADDRESS_TYPE_NAME, i
+                ));
+            }
+        }
+
+        if fields_string.len() > 1 {
+            fields_string.pop(); // remove trailing space
+            fields_string.pop(); // remove trailing comma
+
+            fields_string = format!("({})", fields_string);
+        }
+
+        if i_count == 0 && r_count == 0 && a_count == 0 {
+            rhs_string = "Vec::new()".to_string();
+        } else {
+            rhs_string = format!("{}{}\tv\n{}}}", rhs_string, inset, inset);
+        }
+
+        write!(
+            file,
+            "Self::{}{} => {},\n",
+            variant, fields_string, rhs_string
+        )
+        .expect("Unable to write opcode match line");
+    }
 }
 
 fn generate_execute_trait(opcodes: MethodDetails) {

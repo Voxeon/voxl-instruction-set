@@ -164,3 +164,15 @@ impl From<u8> for Immediate {
         return Self::new([n, 0, 0, 0, 0, 0, 0, 0]);
     }
 }
+
+impl Into<[u8; Immediate::BYTES]> for Immediate {
+    fn into(self) -> [u8; Immediate::BYTES] {
+        return Into::<u64>::into(self).to_le_bytes();
+    }
+}
+
+impl Into<[u8; Address::BYTES]> for Address {
+    fn into(self) -> [u8; Address::BYTES] {
+        return Into::<u64>::into(self).to_le_bytes();
+    }
+}
