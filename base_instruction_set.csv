@@ -1,0 +1,71 @@
+﻿Binary,Decimal,Hex,Opcode,Description,Immediates,Registers,Addresses
+00000000,0,00,nop,No op,0,0,0
+00000001,1,01,syscall,System call,1,0,0
+00000010,2,02,ldb,Load byte to register,1,1,0
+00000011,3,03,ldi,Load integer to register,1,1,0
+00000100,4,04,ldf,Load float to register,1,1,0
+00000101,5,05,mov,Move between registers,0,2,0
+00000110,6,06,push,Push register to stack,0,1,0
+00000111,7,07,pop,Pop from stack to register,0,1,0
+00001000,8,08,sget,Access value at top-n of the stack,0,2,0
+00001001,9,09,malloc,Request memory of length n in bytes,0,2,0
+00001010,10,0A,malloci,Request memory of length n in bytes (immediate),1,1,0
+00001011,11,0B,free,Free allocated memory at address,0,1,0
+00001100,12,0C,freea,Free allocated memory at address (address),0,0,1
+00001101,13,0D,setb,Set byte at index in allocated memory.,0,3,0
+00001110,14,0E,seti,Set integer at index in allocated memory,0,3,0
+00001111,15,0F,isetb,Set byte at index in allocated memory. (immediate),1,2,0
+00010000,16,10,iseti,Set integer at index in allocated memory (immediate),1,2,0
+00010001,17,11,getb,Take byte from array at offset,0,3,0
+00010010,18,12,geti,Take integer from array at offset,0,3,0
+00010011,19,13,igetb,Take byte from array at offset (immediate),1,2,0
+00010100,20,14,igeti,Take integer from array at offset (immediate),1,2,0
+00010101,21,15,last,Copy the last 64-bits in the memory location into register.,0,2,0
+00010110,22,16,length,Get the size of the allocated memory,0,2,0
+00010111,23,17,clone,"Clones a section of allocated memory, allocating more memory at a new location",0,2,0
+00011000,24,18,copy,Copy n bytes at offset to another address at offset.,0,5,0
+00011001,25,19,copyi,Copy n bytes at offset to another address at offset.,3,2,0
+00011010,26,1A,addi,Add 2 integers,0,3,0
+00011011,27,1B,subi,Sub 2 integers,0,3,0
+00011100,28,1C,muli,Multiply integers,0,3,0
+00011101,29,1D,divi,Divide integers,0,3,0
+00011110,30,1E,modi,Modulo integers,0,3,0
+00011111,31,1F,addu,Add 2 unsigned integers,0,3,0
+00100000,32,20,subu,Sub 2 unsigned integers,0,3,0
+00100001,33,21,mulu,Multiply unsigned integers,0,3,0
+00100010,34,22,divu,Divide unsigned integers,0,3,0
+00100011,35,23,modu,Modulo unsigned integers,0,3,0
+00100100,36,24,addf,Add 2 floats,0,3,0
+00100101,37,25,subf,Sub 2 floats,0,3,0
+00100110,38,26,mulf,Multiply floats,0,3,0
+00100111,39,27,divf,Divide floats,0,3,0
+00101000,40,28,rotl,Rotate left,0,2,0
+00101001,41,29,rotli,Rotate left (immediate),1,1,0
+00101010,42,2A,rotr,Rotate right,0,2,0
+00101011,43,2B,rotri,Rotate right (immediate),1,1,0
+00101100,44,2C,sll,Shift left logical,0,2,0
+00101101,45,2D,slli,Shift left logical (Immediate),1,1,0
+00101110,46,2E,srl,Shift right logical,0,2,0
+00101111,47,2F,srli,Shift right logical (Immediate),1,1,0
+00110000,48,30,not,Bitwise not,0,1,0
+00110001,49,31,and,Bitwise and,0,3,0
+00110010,50,32,or,Bitwise or,0,3,0
+00110011,51,33,xor,Bitwise xor,0,3,0
+00110100,52,34,cmp,Compare unsigned integers,0,2,0
+00110101,53,35,cmpi,Compare integers,0,2,0
+00110110,54,36,cmpf,Compare floats,0,2,0
+00110111,55,37,jmp,Jump,0,0,1
+00111000,56,38,jeq,Jump equal,0,0,1
+00111001,57,39,jne,Jump not equal,0,0,1
+00111010,58,3A,jge,Jump greater than or equal,0,0,1
+00111011,59,3B,jgt,Jump greater than,0,0,1
+00111100,60,3C,jle,Jump less than or equal,0,0,1
+00111101,61,3D,jlt,Jump less than,0,0,1
+00111110,62,3E,i2f,Convert integer to float,0,1,0
+00111111,63,3F,f2i,Convert float to integer,0,1,0
+01000000,64,40,swpa,Swap two values at addressess,0,0,2
+01000001,65,41,swpar,Swap two values at addressess stored in registers,0,2,0
+01000010,66,42,swpr,Swap two values in registers,0,2,0
+01000011,67,43,call,Call a function,0,0,1
+01000100,68,44,ret,Return from a function,0,0,0
+01000101,69,45,halt,Halt execution,0,0,0
