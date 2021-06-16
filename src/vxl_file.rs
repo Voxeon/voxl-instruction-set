@@ -87,6 +87,14 @@ impl VXLFile {
             instructions,
         };
     }
+
+    pub fn header(&self) -> VXLHeader {
+        return self.header;
+    }
+
+    pub fn instructions(&self) -> &Vec<Instruction> {
+        return &self.instructions;
+    }
 }
 
 impl Into<Vec<u8>> for VXLHeader {
