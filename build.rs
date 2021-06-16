@@ -303,6 +303,10 @@ fn generate_opcode_methods(file: &mut File, opcodes: &MethodDetails) {
 
     generate_immediate_method(b"\t", file, opcodes);
 
+    file.write(b"\n").expect("Failed to write padding new line");
+
+    generate_opcode_from_name_method(b"\t", file, opcodes);
+
     // Generate the create new opcode
     file.write(b"\n\t")
         .expect("Failed to write padding new line");
@@ -314,6 +318,41 @@ fn generate_opcode_methods(file: &mut File, opcodes: &MethodDetails) {
 
     file.write(b"}\n\n")
         .expect("Failed to write impl closing brace");
+}
+
+fn generate_opcode_from_name_method(base_indent: &[u8], file: &mut File, opcodes: &MethodDetails) {
+    file.write(base_indent)
+        .expect("Unable to write base indent");
+    file.write(b"pub fn from_string(opcode: &str) -> Option<u8> {\n")
+        .expect("Unable to write property method header.");
+    file.write(base_indent)
+        .expect("Unable to write base indent");
+    file.write(b"\t return Some(match opcode {\n")
+        .expect("Unable to write step indent");
+
+    for (opcode, _fields, variant, dec) in opcodes {
+        file.write(base_indent)
+            .expect("Unable to write base indent");
+        file.write(b"\t\t").expect("Unable to write step indent");
+
+        write!(file, "\"{}\" => {}, //{}\n", opcode, dec, variant)
+            .expect("Unable to write opcode match line");
+    }
+
+    if opcodes.len() != 256 {
+        file.write(base_indent)
+            .expect("Unable to write base indent");
+        file.write(b"\t\t").expect("Unable to write step indent");
+        write!(file, "_ => return None,\n").expect("Unable to write field display information.");
+    }
+
+    file.write(base_indent)
+        .expect("Unable to write base indent");
+    file.write(b"\t});\n").expect("Unable to write next indent");
+    file.write(base_indent)
+        .expect("Unable to write base indent");
+    file.write(b"}\n")
+        .expect("Unable to write method termination");
 }
 
 create_property_method!(

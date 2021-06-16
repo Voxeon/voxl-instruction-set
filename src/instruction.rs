@@ -311,6 +311,82 @@ impl Instruction {
 		});
 	}
 
+	pub fn from_string(opcode: &str) -> Option<u8> {
+		 return Some(match opcode {
+			"nop" => 0, //Nop
+			"syscall" => 1, //Syscall
+			"ldb" => 2, //Ldb
+			"ldi" => 3, //Ldi
+			"ldf" => 4, //Ldf
+			"mov" => 5, //Mov
+			"push" => 6, //Push
+			"pop" => 7, //Pop
+			"sget" => 8, //Sget
+			"malloc" => 9, //Malloc
+			"malloci" => 10, //Malloci
+			"free" => 11, //Free
+			"freea" => 12, //Freea
+			"setb" => 13, //Setb
+			"seti" => 14, //Seti
+			"isetb" => 15, //Isetb
+			"iseti" => 16, //Iseti
+			"getb" => 17, //Getb
+			"geti" => 18, //Geti
+			"igetb" => 19, //Igetb
+			"igeti" => 20, //Igeti
+			"last" => 21, //Last
+			"length" => 22, //Length
+			"clone" => 23, //Clone
+			"copy" => 24, //Copy
+			"copyi" => 25, //Copyi
+			"addi" => 26, //Addi
+			"subi" => 27, //Subi
+			"muli" => 28, //Muli
+			"divi" => 29, //Divi
+			"modi" => 30, //Modi
+			"addu" => 31, //Addu
+			"subu" => 32, //Subu
+			"mulu" => 33, //Mulu
+			"divu" => 34, //Divu
+			"modu" => 35, //Modu
+			"addf" => 36, //Addf
+			"subf" => 37, //Subf
+			"mulf" => 38, //Mulf
+			"divf" => 39, //Divf
+			"rotl" => 40, //Rotl
+			"rotli" => 41, //Rotli
+			"rotr" => 42, //Rotr
+			"rotri" => 43, //Rotri
+			"sll" => 44, //Sll
+			"slli" => 45, //Slli
+			"srl" => 46, //Srl
+			"srli" => 47, //Srli
+			"not" => 48, //Not
+			"and" => 49, //And
+			"or" => 50, //Or
+			"xor" => 51, //Xor
+			"cmp" => 52, //Cmp
+			"cmpi" => 53, //Cmpi
+			"cmpf" => 54, //Cmpf
+			"jmp" => 55, //Jmp
+			"jeq" => 56, //Jeq
+			"jne" => 57, //Jne
+			"jge" => 58, //Jge
+			"jgt" => 59, //Jgt
+			"jle" => 60, //Jle
+			"jlt" => 61, //Jlt
+			"i2f" => 62, //I2f
+			"f2i" => 63, //F2i
+			"swpa" => 64, //Swpa
+			"swpar" => 65, //Swpar
+			"swpr" => 66, //Swpr
+			"call" => 67, //Call
+			"ret" => 68, //Ret
+			"halt" => 69, //Halt
+			_ => return None,
+		});
+	}
+
 	pub fn new(opcode: u8, registers: Vec<Register>, addresses: Vec<Address>, immediates: Vec<Immediate>) -> Option<Self> {
 		if registers.len() != Self::register_count(opcode)? || addresses.len() != Self::address_count(opcode)? || immediates.len() != Self::immediate_count(opcode)? {
 			return None;
