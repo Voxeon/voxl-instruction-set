@@ -73,9 +73,16 @@ impl Address {
     }
 }
 
-impl Into<u64> for Address {
-    fn into(self) -> u64 {
-        return self.absolute_address;
+impl Register {
+    /// Returns the register variant for the specified indicator. Upper 4 bits are ignored.
+    pub fn from_bits(indicator: u8) -> Register {
+        return indicator.into();
+    }
+}
+
+impl Immediate {
+    pub fn new(bytes: [u8; Immediate::BYTES]) -> Self {
+        return Self { bytes };
     }
 }
 
@@ -83,16 +90,29 @@ impl InstructionArgument for Address {
     const BIT_SIZE: usize = 64;
 }
 
-impl From<[u8; Immediate::BYTES]> for Address {
-    fn from(bytes: [u8; Immediate::BYTES]) -> Self {
-        return Self::new(u64::from_le_bytes(bytes));
+impl Into<u64> for Address {
+    fn into(self) -> u64 {
+        return self.absolute_address;
     }
 }
 
-impl Register {
-    /// Returns the register variant for the specified indicator. Upper 4 bits are ignored.
-    pub fn from_bits(indicator: u8) -> Register {
-        return indicator.into();
+impl From<u64> for Address {
+    fn from(n: u64) -> Self {
+        return Self {
+            absolute_address: n,
+        };
+    }
+}
+
+impl Into<[u8; Address::BYTES]> for Address {
+    fn into(self) -> [u8; Address::BYTES] {
+        return Into::<u64>::into(self).to_le_bytes();
+    }
+}
+
+impl From<[u8; Immediate::BYTES]> for Address {
+    fn from(bytes: [u8; Immediate::BYTES]) -> Self {
+        return Self::new(u64::from_le_bytes(bytes));
     }
 }
 
@@ -125,12 +145,6 @@ impl From<u8> for Register {
     }
 }
 
-impl Immediate {
-    pub fn new(bytes: [u8; Immediate::BYTES]) -> Self {
-        return Self { bytes };
-    }
-}
-
 impl InstructionArgument for Immediate {
     const BIT_SIZE: usize = 64;
 }
@@ -153,6 +167,12 @@ impl Into<u64> for Immediate {
     }
 }
 
+impl From<u64> for Immediate {
+    fn from(n: u64) -> Self {
+        return Self::new(n.to_le_bytes());
+    }
+}
+
 impl From<f64> for Immediate {
     fn from(n: f64) -> Self {
         return Self::new(n.to_le_bytes());
@@ -171,8 +191,100 @@ impl Into<[u8; Immediate::BYTES]> for Immediate {
     }
 }
 
-impl Into<[u8; Address::BYTES]> for Address {
-    fn into(self) -> [u8; Address::BYTES] {
-        return Into::<u64>::into(self).to_le_bytes();
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Instruction;
+    use alloc::vec;
+    use alloc::vec::Vec;
+
+    macro_rules! generate_test {
+        ($variant:expr, $output:expr, $name:ident) => {
+            #[test]
+            pub fn $name() {
+                let instruction: Instruction = $variant;
+
+                let bytes: Vec<u8> = instruction.into();
+
+                assert_eq!(bytes, $output);
+            }
+        };
     }
+
+    generate_test!(Instruction::Nop, vec![0x0], test_nop_into_bytes);
+
+    generate_test!(
+        Instruction::Syscall(Immediate::from(52u64)),
+        vec![0x1, 0x34, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0],
+        test_syscall_into_bytes
+    );
+
+    generate_test!(
+        Instruction::Malloc(Register::R0, Register::R1),
+        vec![0x9, 0b0110_0111],
+        test_malloc_into_bytes
+    );
+
+    generate_test!(
+        Instruction::Malloci(Immediate::from(10u64), Register::R0),
+        vec![0xa, 0xa, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0b0110_0000],
+        test_malloci_into_bytes
+    );
+
+    generate_test!(
+        Instruction::Copy(
+            Register::R5,
+            Register::R0,
+            Register::R6,
+            Register::R1,
+            Register::R7
+        ),
+        vec![0x18, 0b1011_0110, 0b1100_0111, 0b1101_0000],
+        test_copy_into_bytes
+    );
+
+    generate_test!(
+        Instruction::Copyi(
+            Immediate::from(0x45u64),
+            Immediate::from(0x12u64),
+            Immediate::from(0x33u64),
+            Register::R0,
+            Register::R1
+        ),
+        vec![
+            0x19,
+            0x45,
+            0x0,
+            0x0,
+            0x0,
+            0x0,
+            0x0,
+            0x0,
+            0x0,
+            0x12,
+            0x0,
+            0x0,
+            0x0,
+            0x0,
+            0x0,
+            0x0,
+            0x0,
+            0x33,
+            0x0,
+            0x0,
+            0x0,
+            0x0,
+            0x0,
+            0x0,
+            0x0,
+            0b0110_0111
+        ],
+        test_copyi_into_bytes
+    );
+
+    generate_test!(
+        Instruction::Jmp(Address::from(5u64)),
+        vec![0x37, 5, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0],
+        test_jmp_into_bytes
+    );
 }

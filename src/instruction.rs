@@ -8,6 +8,7 @@ use crate::Immediate;
 use crate::InstructionArgument;
 
 use alloc::vec::Vec;
+use alloc::vec;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Instruction {
@@ -549,426 +550,383 @@ impl core::fmt::Display for Instruction {
 impl Into<Vec<u8>> for Instruction {
 	 fn into(self) -> Vec<u8> {
 		 return match self {
-			Self::Nop => Vec::new(),
+			Self::Nop => vec![0],
 			Self::Syscall(i) => {
-				let mut v = Vec::new();
+				let mut v = vec![1];
 				v.extend_from_slice(&Into::<[u8; Immediate::BYTES]>::into(i));
 				v
 			},
 			Self::Ldb(i, r) => {
-				let mut v = Vec::new();
+				let mut v = vec![2];
 				v.extend_from_slice(&Into::<[u8; Immediate::BYTES]>::into(i));
-				v.push(r as u8);
+				v.push((r as u8) << 4);
 				v
 			},
 			Self::Ldi(i, r) => {
-				let mut v = Vec::new();
+				let mut v = vec![3];
 				v.extend_from_slice(&Into::<[u8; Immediate::BYTES]>::into(i));
-				v.push(r as u8);
+				v.push((r as u8) << 4);
 				v
 			},
 			Self::Ldf(i, r) => {
-				let mut v = Vec::new();
+				let mut v = vec![4];
 				v.extend_from_slice(&Into::<[u8; Immediate::BYTES]>::into(i));
-				v.push(r as u8);
+				v.push((r as u8) << 4);
 				v
 			},
 			Self::Mov(r, r1) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
+				let mut v = vec![5];
+				v.push((r as u8) << 4 | (r1 as u8));
 				v
 			},
 			Self::Push(r) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
+				let mut v = vec![6];
+				v.push((r as u8) << 4);
 				v
 			},
 			Self::Pop(r) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
+				let mut v = vec![7];
+				v.push((r as u8) << 4);
 				v
 			},
 			Self::Sget(r, r1) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
+				let mut v = vec![8];
+				v.push((r as u8) << 4 | (r1 as u8));
 				v
 			},
 			Self::Malloc(r, r1) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
+				let mut v = vec![9];
+				v.push((r as u8) << 4 | (r1 as u8));
 				v
 			},
 			Self::Malloci(i, r) => {
-				let mut v = Vec::new();
+				let mut v = vec![10];
 				v.extend_from_slice(&Into::<[u8; Immediate::BYTES]>::into(i));
-				v.push(r as u8);
+				v.push((r as u8) << 4);
 				v
 			},
 			Self::Free(r) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
+				let mut v = vec![11];
+				v.push((r as u8) << 4);
 				v
 			},
 			Self::Freea(a) => {
-				let mut v = Vec::new();
+				let mut v = vec![12];
 				v.extend_from_slice(&Into::<[u8; Address::BYTES]>::into(a));
 				v
 			},
 			Self::Setb(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![13];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Seti(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![14];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Isetb(i, r, r1) => {
-				let mut v = Vec::new();
+				let mut v = vec![15];
 				v.extend_from_slice(&Into::<[u8; Immediate::BYTES]>::into(i));
-				v.push(r as u8);
-				v.push(r1 as u8);
+				v.push((r as u8) << 4 | (r1 as u8));
 				v
 			},
 			Self::Iseti(i, r, r1) => {
-				let mut v = Vec::new();
+				let mut v = vec![16];
 				v.extend_from_slice(&Into::<[u8; Immediate::BYTES]>::into(i));
-				v.push(r as u8);
-				v.push(r1 as u8);
+				v.push((r as u8) << 4 | (r1 as u8));
 				v
 			},
 			Self::Getb(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![17];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Geti(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![18];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Igetb(i, r, r1) => {
-				let mut v = Vec::new();
+				let mut v = vec![19];
 				v.extend_from_slice(&Into::<[u8; Immediate::BYTES]>::into(i));
-				v.push(r as u8);
-				v.push(r1 as u8);
+				v.push((r as u8) << 4 | (r1 as u8));
 				v
 			},
 			Self::Igeti(i, r, r1) => {
-				let mut v = Vec::new();
+				let mut v = vec![20];
 				v.extend_from_slice(&Into::<[u8; Immediate::BYTES]>::into(i));
-				v.push(r as u8);
-				v.push(r1 as u8);
+				v.push((r as u8) << 4 | (r1 as u8));
 				v
 			},
 			Self::Last(r, r1) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
+				let mut v = vec![21];
+				v.push((r as u8) << 4 | (r1 as u8));
 				v
 			},
 			Self::Length(r, r1) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
+				let mut v = vec![22];
+				v.push((r as u8) << 4 | (r1 as u8));
 				v
 			},
 			Self::Clone(r, r1) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
+				let mut v = vec![23];
+				v.push((r as u8) << 4 | (r1 as u8));
 				v
 			},
 			Self::Copy(r, r1, r2, r3, r4) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
-				v.push(r3 as u8);
-				v.push(r4 as u8);
+				let mut v = vec![24];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4 | (r3 as u8));
+				v.push((r4 as u8) << 4);
 				v
 			},
 			Self::Copyi(i, i1, i2, r, r1) => {
-				let mut v = Vec::new();
+				let mut v = vec![25];
 				v.extend_from_slice(&Into::<[u8; Immediate::BYTES]>::into(i));
 				v.extend_from_slice(&Into::<[u8; Immediate::BYTES]>::into(i1));
 				v.extend_from_slice(&Into::<[u8; Immediate::BYTES]>::into(i2));
-				v.push(r as u8);
-				v.push(r1 as u8);
+				v.push((r as u8) << 4 | (r1 as u8));
 				v
 			},
 			Self::Addi(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![26];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Subi(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![27];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Muli(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![28];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Divi(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![29];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Modi(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![30];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Addu(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![31];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Subu(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![32];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Mulu(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![33];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Divu(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![34];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Modu(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![35];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Addf(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![36];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Subf(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![37];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Mulf(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![38];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Divf(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![39];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Rotl(r, r1) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
+				let mut v = vec![40];
+				v.push((r as u8) << 4 | (r1 as u8));
 				v
 			},
 			Self::Rotli(i, r) => {
-				let mut v = Vec::new();
+				let mut v = vec![41];
 				v.extend_from_slice(&Into::<[u8; Immediate::BYTES]>::into(i));
-				v.push(r as u8);
+				v.push((r as u8) << 4);
 				v
 			},
 			Self::Rotr(r, r1) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
+				let mut v = vec![42];
+				v.push((r as u8) << 4 | (r1 as u8));
 				v
 			},
 			Self::Rotri(i, r) => {
-				let mut v = Vec::new();
+				let mut v = vec![43];
 				v.extend_from_slice(&Into::<[u8; Immediate::BYTES]>::into(i));
-				v.push(r as u8);
+				v.push((r as u8) << 4);
 				v
 			},
 			Self::Sll(r, r1) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
+				let mut v = vec![44];
+				v.push((r as u8) << 4 | (r1 as u8));
 				v
 			},
 			Self::Slli(i, r) => {
-				let mut v = Vec::new();
+				let mut v = vec![45];
 				v.extend_from_slice(&Into::<[u8; Immediate::BYTES]>::into(i));
-				v.push(r as u8);
+				v.push((r as u8) << 4);
 				v
 			},
 			Self::Srl(r, r1) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
+				let mut v = vec![46];
+				v.push((r as u8) << 4 | (r1 as u8));
 				v
 			},
 			Self::Srli(i, r) => {
-				let mut v = Vec::new();
+				let mut v = vec![47];
 				v.extend_from_slice(&Into::<[u8; Immediate::BYTES]>::into(i));
-				v.push(r as u8);
+				v.push((r as u8) << 4);
 				v
 			},
 			Self::Not(r) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
+				let mut v = vec![48];
+				v.push((r as u8) << 4);
 				v
 			},
 			Self::And(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![49];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Or(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![50];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Xor(r, r1, r2) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
-				v.push(r2 as u8);
+				let mut v = vec![51];
+				v.push((r as u8) << 4 | (r1 as u8));
+				v.push((r2 as u8) << 4);
 				v
 			},
 			Self::Cmp(r, r1) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
+				let mut v = vec![52];
+				v.push((r as u8) << 4 | (r1 as u8));
 				v
 			},
 			Self::Cmpi(r, r1) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
+				let mut v = vec![53];
+				v.push((r as u8) << 4 | (r1 as u8));
 				v
 			},
 			Self::Cmpf(r, r1) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
+				let mut v = vec![54];
+				v.push((r as u8) << 4 | (r1 as u8));
 				v
 			},
 			Self::Jmp(a) => {
-				let mut v = Vec::new();
+				let mut v = vec![55];
 				v.extend_from_slice(&Into::<[u8; Address::BYTES]>::into(a));
 				v
 			},
 			Self::Jeq(a) => {
-				let mut v = Vec::new();
+				let mut v = vec![56];
 				v.extend_from_slice(&Into::<[u8; Address::BYTES]>::into(a));
 				v
 			},
 			Self::Jne(a) => {
-				let mut v = Vec::new();
+				let mut v = vec![57];
 				v.extend_from_slice(&Into::<[u8; Address::BYTES]>::into(a));
 				v
 			},
 			Self::Jge(a) => {
-				let mut v = Vec::new();
+				let mut v = vec![58];
 				v.extend_from_slice(&Into::<[u8; Address::BYTES]>::into(a));
 				v
 			},
 			Self::Jgt(a) => {
-				let mut v = Vec::new();
+				let mut v = vec![59];
 				v.extend_from_slice(&Into::<[u8; Address::BYTES]>::into(a));
 				v
 			},
 			Self::Jle(a) => {
-				let mut v = Vec::new();
+				let mut v = vec![60];
 				v.extend_from_slice(&Into::<[u8; Address::BYTES]>::into(a));
 				v
 			},
 			Self::Jlt(a) => {
-				let mut v = Vec::new();
+				let mut v = vec![61];
 				v.extend_from_slice(&Into::<[u8; Address::BYTES]>::into(a));
 				v
 			},
 			Self::I2f(r) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
+				let mut v = vec![62];
+				v.push((r as u8) << 4);
 				v
 			},
 			Self::F2i(r) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
+				let mut v = vec![63];
+				v.push((r as u8) << 4);
 				v
 			},
 			Self::Swpa(a, a1) => {
-				let mut v = Vec::new();
+				let mut v = vec![64];
 				v.extend_from_slice(&Into::<[u8; Address::BYTES]>::into(a));
 				v.extend_from_slice(&Into::<[u8; Address::BYTES]>::into(a1));
 				v
 			},
 			Self::Swpar(r, r1) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
+				let mut v = vec![65];
+				v.push((r as u8) << 4 | (r1 as u8));
 				v
 			},
 			Self::Swpr(r, r1) => {
-				let mut v = Vec::new();
-				v.push(r as u8);
-				v.push(r1 as u8);
+				let mut v = vec![66];
+				v.push((r as u8) << 4 | (r1 as u8));
 				v
 			},
 			Self::Call(a) => {
-				let mut v = Vec::new();
+				let mut v = vec![67];
 				v.extend_from_slice(&Into::<[u8; Address::BYTES]>::into(a));
 				v
 			},
-			Self::Ret => Vec::new(),
-			Self::Halt => Vec::new(),
+			Self::Ret => vec![68],
+			Self::Halt => vec![69],
 		};
 	}
 }

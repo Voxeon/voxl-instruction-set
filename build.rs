@@ -5,7 +5,7 @@ use serde::Deserialize;
 use std::fs::{File, OpenOptions};
 use std::io::Write;
 
-const IMPORTS: &'static str = "use alloc::vec::Vec;";
+const IMPORTS: &'static str = "use alloc::vec::Vec;\nuse alloc::vec;";
 const INSTRUCTION_SET_PATH: &'static str = "base_instruction_set.csv";
 const OPCODE_OUTPUT_PATH: &'static str = "src/instruction.rs";
 const EXECUTE_OUTPUT_PATH: &'static str = "src/execute_instruction.rs";
@@ -455,7 +455,7 @@ fn generate_into_bytes_trait(file: &mut File, opcodes: &MethodDetails) {
     file.write(opcode_impl_into_bytes_header().as_bytes())
         .expect("Failed to write bytes header.");
 
-    for (_opcode, fields, variant, _dec) in opcodes {
+    for (_opcode, fields, variant, dec) in opcodes {
         let inset = "\t\t\t";
 
         file.write(inset.as_bytes())
@@ -476,7 +476,7 @@ fn generate_into_bytes_trait(file: &mut File, opcodes: &MethodDetails) {
         }
 
         let mut fields_string = String::new();
-        let mut rhs_string = format!("{{\n{}\tlet mut v = Vec::new();\n", inset);
+        let mut rhs_string = format!("{{\n{}\tlet mut v = vec![{}];\n", inset, dec);
 
         for i in 0..i_count {
             if i == 0 {
@@ -494,13 +494,30 @@ fn generate_into_bytes_trait(file: &mut File, opcodes: &MethodDetails) {
             }
         }
 
-        for i in 0..r_count {
+        fn register_name(i: u64) -> String {
             if i == 0 {
-                fields_string.push_str("r, ");
-                rhs_string.push_str(&format!("{}\tv.push(r as u8);\n", inset));
+                return "r".to_string();
             } else {
-                fields_string.push_str(&format!("r{}, ", i));
-                rhs_string.push_str(&format!("{}\tv.push(r{} as u8);\n", inset, i));
+                return format!("r{}", i);
+            }
+        }
+
+        for i in 0..r_count {
+            fields_string.push_str(&format!("{}, ", register_name(i)));
+
+            if i > 0 && i % 2 == 1 {
+                rhs_string.push_str(&format!(
+                    "{}\tv.push(({} as u8) << 4 | ({} as u8));\n",
+                    inset,
+                    register_name(i - 1),
+                    register_name(i)
+                ));
+            } else if i == r_count - 1 {
+                rhs_string.push_str(&format!(
+                    "{}\tv.push(({} as u8) << 4);\n",
+                    inset,
+                    register_name(i)
+                ));
             }
         }
 
@@ -528,7 +545,7 @@ fn generate_into_bytes_trait(file: &mut File, opcodes: &MethodDetails) {
         }
 
         if i_count == 0 && r_count == 0 && a_count == 0 {
-            rhs_string = "Vec::new()".to_string();
+            rhs_string = format!("vec![{}]", dec);
         } else {
             rhs_string = format!("{}{}\tv\n{}}}", rhs_string, inset, inset);
         }
