@@ -27,7 +27,7 @@ const NEW_OPCODE_OPENING_IF:[&'static [u8]; 3] =
     [b"if registers.len() != Self::register_count(opcode)? || addresses.len() != Self::address_count(opcode)? || immediates.len() != Self::immediate_count(opcode)? {",
     b"\treturn None;", b"}"];
 
-type MethodDetails = Vec<(String, Vec<&'static str>, String, u8)>;
+type MethodDetails = Vec<(String, Vec<&'static str>, String, u8, String)>;
 
 macro_rules! create_property_method {
     ($header:expr, $method_name:ident, $type_name:ident) => {
@@ -41,7 +41,7 @@ macro_rules! create_property_method {
             file.write(b"\t return Some(match opcode {\n")
                 .expect("Unable to write step indent");
 
-            for (_opcode, fields, variant, dec) in opcodes {
+            for (_opcode, fields, variant, dec, _order) in opcodes {
                 file.write(base_indent)
                     .expect("Unable to write base indent");
                 file.write(b"\t\t").expect("Unable to write step indent");
@@ -87,6 +87,7 @@ struct Row {
     immediates: u8,
     registers: u8,
     addresses: u8,
+    order: String,
 }
 
 fn main() {
@@ -262,7 +263,7 @@ fn generate_opcodes() -> MethodDetails {
 
         variant.push_str(", \n");
 
-        method_details.push((row.opcode, fields, variant_name, row.decimal));
+        method_details.push((row.opcode, fields, variant_name, row.decimal, row.order));
 
         file.write(variant.as_bytes())
             .expect("Unable to write a row");
@@ -277,7 +278,7 @@ fn generate_opcodes() -> MethodDetails {
         .expect("Unable to write header to file.");
 
     // Generate the display trait
-    for (opcode, fields, variant, _) in &method_details {
+    for (opcode, fields, variant, _, _order) in &method_details {
         let mut lhs = format!("\t\t\tSelf::{}", variant);
 
         if fields.len() > 0 {
@@ -309,6 +310,8 @@ fn generate_opcode_methods(file: &mut File, opcodes: &MethodDetails) {
     file.write(opcode_impl_header().as_bytes())
         .expect("Failed to write opcode impl header.");
 
+    generate_ordering_array(opcodes, file, "\t");
+
     generate_register_method(b"\t", file, opcodes);
 
     file.write(b"\n").expect("Failed to write padding new line");
@@ -332,6 +335,10 @@ fn generate_opcode_methods(file: &mut File, opcodes: &MethodDetails) {
 
     generate_new_opcode_method(b"\t", file, opcodes);
 
+    file.write(b"\n").expect("Failed to write padding new line");
+
+    generate_type_ordering_function(file, "\t");
+
     file.write(b"}\n\n")
         .expect("Failed to write impl closing brace");
 }
@@ -346,7 +353,7 @@ fn generate_opcode_from_name_method(base_indent: &[u8], file: &mut File, opcodes
     file.write(b"\t return Some(match opcode {\n")
         .expect("Unable to write step indent");
 
-    for (opcode, _fields, variant, dec) in opcodes {
+    for (opcode, _fields, variant, dec, _order) in opcodes {
         file.write(base_indent)
             .expect("Unable to write base indent");
         file.write(b"\t\t").expect("Unable to write step indent");
@@ -403,7 +410,7 @@ fn generate_new_opcode_method(inset: &[u8], file: &mut File, opcodes: &MethodDet
     file.write(b"\treturn Some(match opcode {\n")
         .expect("Failed to write match start");
 
-    for (_opcode, fields, variant, dec) in opcodes {
+    for (_opcode, fields, variant, dec, _order) in opcodes {
         file.write(inset).expect("Unable to write the inset");
 
         let mut arg_fields = String::new();
@@ -455,7 +462,7 @@ fn generate_into_bytes_trait(file: &mut File, opcodes: &MethodDetails) {
     file.write(opcode_impl_into_bytes_header().as_bytes())
         .expect("Failed to write bytes header.");
 
-    for (_opcode, fields, variant, dec) in opcodes {
+    for (_opcode, fields, variant, dec, _order) in opcodes {
         let inset = "\t\t\t";
 
         file.write(inset.as_bytes())
@@ -578,7 +585,7 @@ fn generate_execute_trait(opcodes: MethodDetails) {
     file.write(execute_header().as_bytes())
         .expect("Unable to write execute trait header");
 
-    for (opcode, fields, variant, _) in &opcodes {
+    for (opcode, fields, variant, _, _order) in &opcodes {
         let mut field_names = Vec::new();
 
         let mut reg_count = 0;
@@ -648,7 +655,7 @@ fn generate_execute_trait(opcodes: MethodDetails) {
     file.write("\t\t};\n\t}\n\n".as_bytes())
         .expect("Unable to write execute_opcode function tail");
 
-    for (opcode, fields, _, _) in opcodes {
+    for (opcode, fields, _, _, _order) in opcodes {
         let mut field_names = Vec::new();
 
         let mut reg_count = 0;
@@ -713,4 +720,71 @@ fn generate_execute_trait(opcodes: MethodDetails) {
 
     file.write("}\n\n".as_bytes())
         .expect("Unable to write execute_opcode function tail");
+}
+
+fn generate_ordering_array(opcodes: &MethodDetails, file: &mut File, indent: &str) {
+    file.write(
+        format!(
+            "{}const ORDERING_ARRAY: [&'static[u8]; {}] = [",
+            indent,
+            opcodes.len()
+        )
+        .as_bytes(),
+    )
+    .expect("Failed to write generic template for constant array.");
+
+    for (_opcode, fields, _variant, _, order) in opcodes {
+        assert_eq!(order.len(), fields.len());
+
+        write!(file, "&[").expect("Failed to write entry");
+        for char in order.chars() {
+            if char == 'r' {
+                write!(file, "0, ").expect("Failed to write entry");
+            } else if char == 'i' {
+                write!(file, "1, ").expect("Failed to write entry");
+            } else if char == 'a' {
+                write!(file, "2, ").expect("Failed to write entry");
+            } else {
+                panic!("Unknown order symbol {}", char);
+            }
+        }
+
+        write!(file, "], ").expect("Failed to write entry");
+    }
+
+    write!(file, "];\n\n").expect("Failed to write closing brace");
+}
+
+fn generate_type_ordering_function(f: &mut File, indent: &str) {
+    write!(
+        f,
+        "{}pub const fn get_type_for_index(opcode: u8, index: usize) -> Option<u8> {{\n",
+        indent
+    )
+    .expect("Failed to write type ordering function line.");
+    write!(
+        f,
+        "{}\tif opcode as usize >= Self::ORDERING_ARRAY.len() {{\n",
+        indent
+    )
+    .expect("Failed to write type ordering function line.");
+    write!(f, "{}\t\treturn None;\n", indent)
+        .expect("Failed to write type ordering function line.");
+    write!(f, "{}\t}}\n\n", indent).expect("Failed to write type ordering function line.");
+    write!(
+        f,
+        "{}\tif index >= Self::ORDERING_ARRAY[opcode as usize].len() {{\n",
+        indent
+    )
+    .expect("Failed to write type ordering function line.");
+    write!(f, "{}\t\treturn None;\n", indent)
+        .expect("Failed to write type ordering function line.");
+    write!(f, "{}\t}}\n\n", indent).expect("Failed to write type ordering function line.");
+    write!(
+        f,
+        "{}\treturn Some(Self::ORDERING_ARRAY[opcode as usize][index]);\n",
+        indent
+    )
+    .expect("Failed to write type ordering function line.");
+    write!(f, "{}}}\n", indent).expect("Failed to write type ordering function line.");
 }
