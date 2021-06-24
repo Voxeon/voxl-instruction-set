@@ -1,4 +1,3 @@
-use crate::Instruction;
 use alloc::vec::Vec;
 
 /*
@@ -24,12 +23,12 @@ pub struct VXLHeader {
 #[derive(Clone, PartialEq, Debug)]
 pub struct VXLFile {
     header: VXLHeader,
-    instructions: Vec<Instruction>,
+    contents: Vec<u8>,
 }
 
 impl VXLHeader {
     pub const HEADER_CHECKSUM_SIZE: usize = 28;
-    pub const SUPPORT_VERSIONS: [u8; 1] = [0x0];
+    pub const SUPPORTED_VERSIONS: [u8; 1] = [0x0];
     pub const HEADER_SIZE: usize = 50;
     pub const CHECKSUM_MASK: u8 = 0b0000_0001;
     pub const MAGIC: [u8; 4] = [0x65, 0x58, 0x56, 0x4c];
@@ -81,10 +80,10 @@ impl VXLHeader {
 }
 
 impl VXLFile {
-    pub fn new(header: VXLHeader, instructions: Vec<Instruction>) -> Self {
+    pub fn new(header: VXLHeader, contents: Vec<u8>) -> Self {
         return Self {
             header,
-            instructions,
+            contents,
         };
     }
 
@@ -92,8 +91,8 @@ impl VXLFile {
         return self.header;
     }
 
-    pub fn instructions(&self) -> &Vec<Instruction> {
-        return &self.instructions;
+    pub fn contents(&self) -> &Vec<u8> {
+        return &self.contents;
     }
 }
 
@@ -114,14 +113,10 @@ impl Into<Vec<u8>> for VXLHeader {
 }
 
 impl Into<Vec<u8>> for VXLFile {
-    fn into(self) -> Vec<u8> {
+    fn into(mut self) -> Vec<u8> {
         let mut bytes: Vec<u8> = self.header.into();
 
-        for instruction in self.instructions {
-            let vec: Vec<u8> = instruction.into();
-
-            bytes.extend_from_slice(&vec);
-        }
+        bytes.append(&mut self.contents);
 
         return bytes;
     }
