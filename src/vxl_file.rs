@@ -81,10 +81,7 @@ impl VXLHeader {
 
 impl VXLFile {
     pub fn new(header: VXLHeader, contents: Vec<u8>) -> Self {
-        return Self {
-            header,
-            contents,
-        };
+        return Self { header, contents };
     }
 
     pub fn header(&self) -> VXLHeader {
