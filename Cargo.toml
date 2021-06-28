@@ -3,6 +3,7 @@ name = "voxl-instruction-set"
 version = "0.1.0-b"
 authors = ["aidos9 <20310468+aidos9@users.noreply.github.com>"]
 edition = "2018"
+build = "build/main.rs"
 
 [build-dependencies]
 csv = "1.1"

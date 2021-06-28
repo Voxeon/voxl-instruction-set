@@ -1,33 +1,56 @@
+use alloc::vec::Vec;
+use alloc::vec;
+
+/// Defines some properties any instruction argument should have.
 pub trait InstructionArgument {
+    /// The number of bits for this instruction argument type.
     const BIT_SIZE: usize;
+
+    /// The number of bytes for this instruction argument type.
     const BYTES: usize = (Self::BIT_SIZE + Self::BIT_SIZE % 8) / 8;
+
+    /// Should guarantee a conversion to a vector of bytes.
+    fn into_bytes(self) -> Vec<u8>;
 }
 
-/*
-Registers (16)
-
-Special Registers
-0000 rsp - Stack pointer
-0001 rfp - Frame pointer
-0010 rou - Result from instructions/returns
-0011 rfl - Flags register (Largely just reserved. LSB 1 - equal, LSB 2 - less than, LSB 3 - greater than)
-
-Reserved registers
-0100 ra - Reserved a
-0101 rb - Reserved b
-
-General purpose registers
-0110 r0
-0111 r1
-1000 r2
-1001 r3
-1010 r4
-1011 r5
-1100 r6
-1101 r7
-1110 r8
-1111 r9
- */
+/// This enum defines all the possible registers supported by the voxl-vm and their value as a byte.
+///
+/// # Registers
+/// ### Special Registers
+/// 0000 - rsp - Stack pointer
+///
+/// 0001 - rfp - Frame pointer
+///
+/// 0010 - rou - Result from instructions/returns
+///
+/// 0011 - rfl - Flags register (Largely just reserved. LSB 1 - equal, LSB 2 - less than, LSB 3 - greater than)
+///
+/// ### Reserved registers
+/// 0100 - rra - Reserved a
+///
+/// 0101 - rrb - Reserved b
+///
+/// ### General purpose registers
+/// 0110 - r0
+///
+/// 0111 - r1
+///
+/// 1000 - r2
+///
+/// 1001 - r3
+///
+/// 1010 - r4
+///
+/// 1011 - r5
+///
+/// 1100 - r6
+///
+/// 1101 - r7
+///
+/// 1110 - r8
+///
+/// 1111 - r9
+///
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 #[repr(u8)]
 pub enum Register {
@@ -40,34 +63,49 @@ pub enum Register {
     /// Flags register
     RFL = 3,
 
-    /// Reserved
+    /// Reserved A
     RRA = 4,
+    /// Reserved B
     RRB = 5,
 
-    // General purpose registers
+    /// General purpose register 0
     R0 = 6,
+    /// General purpose register 1
     R1 = 7,
+    /// General purpose register 2
     R2 = 8,
+    /// General purpose register 3
     R3 = 9,
+    /// General purpose register 4
     R4 = 10,
+    /// General purpose register 5
     R5 = 11,
+    /// General purpose register 6
     R6 = 12,
+    /// General purpose register 7
     R7 = 13,
+    /// General purpose register 8
     R8 = 14,
+    /// General purpose register 9
     R9 = 15,
 }
 
+/// This struct represents an address in memory, it is an absolute value and used in multiple contexts,
+/// it can be used to represent the unique identifier of heap allocated memory or the offset from the
+/// start of the program for a specific instruction
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Address {
     absolute_address: u64,
 }
 
+/// Represents an immediate value as a 64-bit value. Could be a float, signed or unsigned integer.
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Immediate {
     bytes: [u8; Immediate::BYTES],
 }
 
 impl Address {
+    /// Creates a new address from an absolute address.
     pub fn new(absolute_address: u64) -> Self {
         return Self { absolute_address };
     }
@@ -81,6 +119,7 @@ impl Register {
 }
 
 impl Immediate {
+    /// Creates a new immediate from the constituent bytes.
     pub fn new(bytes: [u8; Immediate::BYTES]) -> Self {
         return Self { bytes };
     }
@@ -88,6 +127,10 @@ impl Immediate {
 
 impl InstructionArgument for Address {
     const BIT_SIZE: usize = 64;
+
+    fn into_bytes(self) -> Vec<u8> {
+        return Into::<[u8; Self::BYTES]>::into(self).to_vec();
+    }
 }
 
 impl Into<u64> for Address {
@@ -118,6 +161,10 @@ impl From<[u8; Immediate::BYTES]> for Address {
 
 impl InstructionArgument for Register {
     const BIT_SIZE: usize = 4;
+
+    fn into_bytes(self) -> Vec<u8> {
+        return vec![self as u8];
+    }
 }
 
 impl From<u8> for Register {
@@ -147,6 +194,10 @@ impl From<u8> for Register {
 
 impl InstructionArgument for Immediate {
     const BIT_SIZE: usize = 64;
+
+    fn into_bytes(self) -> Vec<u8> {
+        return Into::<[u8; Self::BYTES]>::into(self).to_vec();
+    }
 }
 
 impl From<[u8; Immediate::BYTES]> for Immediate {
