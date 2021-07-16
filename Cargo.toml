@@ -8,4 +8,4 @@ build = "build/main.rs"
 [build-dependencies]
 csv = "1.1"
 serde = { version = "1.0", features = ["derive"] }
-rmod_gen = { git = "https://github.com/Voxeon/rmod_gen" }
+rmod_gen = { git = "https://github.com/Voxeon/rmod_gen", branch = "main" }
