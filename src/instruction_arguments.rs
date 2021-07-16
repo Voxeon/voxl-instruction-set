@@ -1,5 +1,5 @@
-use alloc::vec::Vec;
 use alloc::vec;
+use alloc::vec::Vec;
 
 /// Defines some properties any instruction argument should have.
 pub trait InstructionArgument {

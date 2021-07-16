@@ -1,17 +1,18 @@
 /*
 This script is very messy and it will be hard to expand in the future but for the moment it works and will do.
 */
+mod config;
+mod constants;
 mod gen_execute_instruction;
 mod gen_instruction;
-mod constants;
-mod config;
 
 use std::fs::{File, OpenOptions};
+use std::path::Path;
 
+use crate::config::{Instruction, InstructionDetails, Row};
 use constants::*;
 use gen_execute_instruction::generate_execute_trait;
 use gen_instruction::generate_instruction_file;
-use crate::config::{InstructionDetails, Row, Instruction};
 
 fn main() {
     println!("cargo:rerun-if-changed={}", INSTRUCTION_SET_PATH);
@@ -40,10 +41,7 @@ fn open_file_writing(path: &str) -> File {
 }
 
 fn open_file_reading(path: &str) -> File {
-    return match OpenOptions::new()
-        .read(true)
-        .open(path)
-    {
+    return match OpenOptions::new().read(true).open(path) {
         Ok(f) => f,
         Err(e) => {
             panic!(
@@ -55,7 +53,7 @@ fn open_file_reading(path: &str) -> File {
 }
 
 fn load_method_details() -> InstructionDetails {
-    if !std::path::Path::new(INSTRUCTION_SET_PATH).exists() {
+    if !Path::new(INSTRUCTION_SET_PATH).exists() {
         panic!("No instruction set file found at {}", INSTRUCTION_SET_PATH);
     }
 

@@ -1,5 +1,5 @@
+use crate::constants::{ADDRESS_TYPE_NAME, IMMEDIATE_TYPE_NAME, REGISTER_TYPE_NAME};
 use serde::Deserialize;
-use crate::constants::{IMMEDIATE_TYPE_NAME, REGISTER_TYPE_NAME, ADDRESS_TYPE_NAME};
 
 pub type InstructionDetails = Vec<Instruction>;
 
@@ -26,7 +26,13 @@ pub struct Instruction {
 }
 
 impl Instruction {
-    pub fn new(short_name: String, fields: Vec<&str>, name: String, opcode_num: u8, argument_order: &str) -> Self {
+    pub fn new(
+        short_name: String,
+        fields: Vec<&str>,
+        name: String,
+        opcode_num: u8,
+        argument_order: &str,
+    ) -> Self {
         return Self {
             short_name,
             fields: fields.into_iter().map(|s| s.to_string()).collect(),
