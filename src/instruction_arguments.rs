@@ -245,7 +245,7 @@ impl Into<[u8; Immediate::BYTES]> for Immediate {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Instruction;
+    use crate::instruction::Instruction;
     use alloc::vec;
     use alloc::vec::Vec;
 
