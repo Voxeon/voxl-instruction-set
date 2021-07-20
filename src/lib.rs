@@ -7,5 +7,6 @@ pub mod execute_instruction;
 pub mod instruction;
 /// Defines the arguments that can be used for instructions.
 pub mod instruction_arguments;
+pub mod syscall_handler;
 /// Structs for defining the format for a vxl binary.
 pub mod vxl_file;
