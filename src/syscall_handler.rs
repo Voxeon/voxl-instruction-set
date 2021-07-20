@@ -2,14 +2,12 @@ use crate::execute_instruction::ExecuteInstruction;
 
 macro_rules! define_default_system_call {
     ($name:ident) => {
-        fn $name(&mut self, machine: &mut M) -> Option<Self::Output>;
+        fn $name(&mut self, machine: &mut M) -> Option<u64>;
     };
 }
 
 pub trait SyscallHandler<M: ExecuteInstruction> {
-    type Output;
-
-    fn execute_call(&mut self, call: u64, machine: &mut M) -> Option<Self::Output> {
+    fn execute_call(&mut self, call: u64, machine: &mut M) -> Option<u64> {
         return match call {
             0 => self.exit(machine),
 
@@ -35,7 +33,7 @@ pub trait SyscallHandler<M: ExecuteInstruction> {
         };
     }
 
-    fn execute_target_specific_call(&mut self, call: u64, machine: &mut M) -> Option<Self::Output>;
+    fn execute_target_specific_call(&mut self, call: u64, machine: &mut M) -> Option<u64>;
 
     define_default_system_call!(exit);
 
