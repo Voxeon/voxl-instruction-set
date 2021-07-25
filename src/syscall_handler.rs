@@ -28,8 +28,6 @@ pub trait SyscallHandler<M: ExecuteInstruction> {
 
             14 => self.time_of_day(machine),
 
-            15 => self.fork_process(machine),
-            16 => self.terminate_process(machine),
             256..=u64::MAX => self.execute_target_specific_call(call, machine),
             _ => return None,
         };
@@ -55,7 +53,4 @@ pub trait SyscallHandler<M: ExecuteInstruction> {
     define_default_system_call!(copy_file);
 
     define_default_system_call!(time_of_day);
-
-    define_default_system_call!(fork_process);
-    define_default_system_call!(terminate_process);
 }
