@@ -21,7 +21,7 @@ pub trait SyscallHandler<M: ExecuteInstruction> {
             7 => self.read_file(machine),
             8 => self.write_file(machine),
             9 => self.execute_file(machine),
-            10 => self.execute_vxl_file(machine),
+            10 => self.execute_xvl_file(machine),
             11 => self.delete_file(machine),
             12 => self.move_file(machine),
             13 => self.copy_file(machine),
@@ -47,7 +47,7 @@ pub trait SyscallHandler<M: ExecuteInstruction> {
     define_default_system_call!(read_file);
     define_default_system_call!(write_file);
     define_default_system_call!(execute_file);
-    define_default_system_call!(execute_vxl_file);
+    define_default_system_call!(execute_xvl_file);
     define_default_system_call!(delete_file);
     define_default_system_call!(move_file);
     define_default_system_call!(copy_file);
