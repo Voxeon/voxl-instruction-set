@@ -1,5 +1,6 @@
 use alloc::vec;
 use alloc::vec::Vec;
+use core::fmt;
 
 /// Defines some properties any instruction argument should have.
 pub trait InstructionArgument {
@@ -98,10 +99,19 @@ pub struct Address {
     absolute_address: u64,
 }
 
+/// Represents the type of an Immediate
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+pub enum ImmediateType {
+    UnsignedInteger,
+    SignedInteger,
+    Float,
+}
+
 /// Represents an immediate value as a 64-bit value. Could be a float, signed or unsigned integer.
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Immediate {
     bytes: [u8; Immediate::BYTES],
+    tp: ImmediateType,
 }
 
 impl Address {
@@ -121,7 +131,20 @@ impl Register {
 impl Immediate {
     /// Creates a new immediate from the constituent bytes.
     pub fn new(bytes: [u8; Immediate::BYTES]) -> Self {
-        return Self { bytes };
+        return Self {
+            bytes,
+            tp: ImmediateType::UnsignedInteger,
+        };
+    }
+
+    pub fn set_type(&mut self, tp: ImmediateType) {
+        self.tp = tp;
+    }
+
+    pub fn with_type(mut self, tp: ImmediateType) -> Self {
+        self.set_type(tp);
+
+        return self;
     }
 }
 
@@ -159,6 +182,12 @@ impl From<[u8; Immediate::BYTES]> for Address {
     }
 }
 
+impl fmt::Display for Address {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        return write!(f, "0u{}", self.absolute_address);
+    }
+}
+
 impl InstructionArgument for Register {
     const BIT_SIZE: usize = 4;
 
@@ -192,6 +221,31 @@ impl From<u8> for Register {
     }
 }
 
+impl fmt::Display for Register {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let name = match self {
+            Register::RSP => "rsp",
+            Register::RFP => "rfp",
+            Register::ROU => "rou",
+            Register::RFL => "rfl",
+            Register::RRA => "rra",
+            Register::RRB => "rrb",
+            Register::R0 => "r0",
+            Register::R1 => "r1",
+            Register::R2 => "r2",
+            Register::R3 => "r3",
+            Register::R4 => "r4",
+            Register::R5 => "r5",
+            Register::R6 => "r6",
+            Register::R7 => "r7",
+            Register::R8 => "r8",
+            Register::R9 => "r9",
+        };
+
+        return write!(f, "${}", name);
+    }
+}
+
 impl InstructionArgument for Immediate {
     const BIT_SIZE: usize = 64;
 
@@ -208,7 +262,7 @@ impl From<[u8; Immediate::BYTES]> for Immediate {
 
 impl From<i64> for Immediate {
     fn from(n: i64) -> Self {
-        return Self::new(n.to_le_bytes());
+        return Self::new(n.to_le_bytes()).with_type(ImmediateType::SignedInteger);
     }
 }
 
@@ -220,7 +274,7 @@ impl Into<u64> for Immediate {
 
 impl From<u64> for Immediate {
     fn from(n: u64) -> Self {
-        return Self::new(n.to_le_bytes());
+        return Self::new(n.to_le_bytes()).with_type(ImmediateType::UnsignedInteger);
     }
 }
 
@@ -232,13 +286,23 @@ impl From<f64> for Immediate {
 
 impl From<u8> for Immediate {
     fn from(n: u8) -> Self {
-        return Self::new([n, 0, 0, 0, 0, 0, 0, 0]);
+        return Self::new([n, 0, 0, 0, 0, 0, 0, 0]).with_type(ImmediateType::UnsignedInteger);
     }
 }
 
 impl Into<[u8; Immediate::BYTES]> for Immediate {
     fn into(self) -> [u8; Immediate::BYTES] {
         return Into::<u64>::into(self).to_le_bytes();
+    }
+}
+
+impl fmt::Display for Immediate {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        return match self.tp {
+            ImmediateType::UnsignedInteger => write!(f, "0u{}", u64::from_le_bytes(self.bytes)),
+            ImmediateType::SignedInteger => write!(f, "0i{}", i64::from_le_bytes(self.bytes)),
+            ImmediateType::Float => write!(f, "0f{}", f64::from_le_bytes(self.bytes)),
+        };
     }
 }
 

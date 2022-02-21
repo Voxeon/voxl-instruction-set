@@ -1,11 +1,12 @@
 [package]
 name = "vxl-iset"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["aidos9 <20310468+aidos9@users.noreply.github.com>"]
 edition = "2021"
 build = "build/main.rs"
 
 [build-dependencies]
 csv = "1.1"
+itertools = "0.10"
 serde = { version = "1.0", features = ["derive"] }
 rmod_gen = { git = "https://github.com/Voxeon/rmod_gen", branch = "main" }

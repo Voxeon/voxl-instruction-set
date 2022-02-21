@@ -1,5 +1,6 @@
 use crate::config::*;
 use crate::constants::*;
+use itertools::Itertools;
 use rmod_gen::rust_component::Visibility;
 use rmod_gen::{
     EnumVariant, RustEnum, RustFile, RustImplementation, RustMethod, RustText, RustVariable,
@@ -80,6 +81,8 @@ pub fn generate_instruction_file(instruction_details: &InstructionDetails) {
 
     rust_file.push_component(generate_into_bytes_trait(instruction_details).into());
 
+    rust_file.push_component(generate_into_opcode_trait(instruction_details).into());
+
     file.write_all(rust_file.into_rust_code().as_bytes())
         .expect("Failed to write generated code.");
 }
@@ -112,6 +115,7 @@ fn create_opcode_impl(opcodes: &InstructionDetails) -> RustImplementation {
     opcode_impl.push_component(generate_address_method(opcodes).into());
     opcode_impl.push_component(generate_immediate_method(opcodes).into());
     opcode_impl.push_component(generate_opcode_from_name_method(opcodes).into());
+    opcode_impl.push_component(generate_into_assembly_method(opcodes).into());
     opcode_impl.push_component(generate_type_ordering_function().into());
 
     return opcode_impl;
@@ -139,6 +143,96 @@ fn generate_opcode_from_name_method(instructions: &InstructionDetails) -> RustMe
     method.set_body(&body);
 
     return method;
+}
+
+fn generate_into_assembly_method(instructions: &InstructionDetails) -> RustMethod {
+    let method = RustMethod::new("into_assembly")
+        .with_argument("self")
+        .with_visibility(Visibility::Public)
+        .with_return_type("String");
+
+    let mut body = String::from("return match self {\n");
+
+    for instruction in instructions {
+        if instruction.fields.len() == 0 {
+            body.push_str(&format!(
+                "\tSelf::{} => \"{}\".to_string(),\n",
+                instruction.name, instruction.short_name
+            ));
+        } else {
+            let mut imm_counter: u8 = 0;
+            let mut reg_counter: u8 = 0;
+            let mut add_counter: u8 = 0;
+
+            #[allow(unstable_name_collisions)]
+            let lhs = format!(
+                "\tSelf::{}({}) => ",
+                instruction.name,
+                instruction
+                    .fields
+                    .iter()
+                    .map(|f| {
+                        if f == IMMEDIATE_TYPE_NAME {
+                            imm_counter += 1;
+                            format!("i{}", imm_counter)
+                        } else if f == ADDRESS_TYPE_NAME {
+                            add_counter += 1;
+                            format!("a{}", add_counter)
+                        } else if f == REGISTER_TYPE_NAME {
+                            reg_counter += 1;
+                            format!("r{}", reg_counter)
+                        } else {
+                            panic!("Unexpected field {}", f);
+                        }
+                    })
+                    .intersperse(", ".to_string())
+                    .collect::<String>()
+            );
+
+            imm_counter = 0;
+            reg_counter = 0;
+            add_counter = 0;
+
+            #[allow(unstable_name_collisions)]
+            let rhs = format!(
+                "{}",
+                instruction
+                    .argument_order
+                    .iter()
+                    .map(|ch| {
+                        if *ch == 'r' {
+                            reg_counter += 1;
+                            format!("r{}", reg_counter)
+                        } else if *ch == 'i' {
+                            imm_counter += 1;
+                            format!("i{}", imm_counter)
+                        } else if *ch == 'a' {
+                            add_counter += 1;
+                            format!("a{}", add_counter)
+                        } else {
+                            panic!("Unexpected character {}", ch);
+                        }
+                    })
+                    .intersperse(", ".to_string())
+                    .collect::<String>()
+            );
+
+            body.push_str(&lhs);
+            #[allow(unstable_name_collisions)]
+            body.push_str(&format!(
+                "format!(\"{} {}\", {}),\n",
+                instruction.short_name,
+                (0..(imm_counter + reg_counter + add_counter))
+                    .into_iter()
+                    .map(|_| { "{}" })
+                    .intersperse(", ")
+                    .collect::<String>(),
+                rhs
+            ));
+        }
+    }
+
+    return method.with_body(&format!("{}}};", body));
 }
 
 create_property_method!(
@@ -221,6 +315,36 @@ fn generate_new_opcode_method(instructions: &InstructionDetails) -> RustMethod {
     method.set_body(&body);
 
     return method;
+}
+
+fn generate_into_opcode_trait(instructions: &InstructionDetails) -> RustImplementation {
+    let mut into_trait = RustImplementation::new_for("Into<u8>", OPCODE_ENUM_NAME);
+    let method = RustMethod::new("into")
+        .with_argument("self")
+        .with_return_type("u8")
+        .with_body(&format!(
+            "return match self {{\n{}}};\n",
+            instructions
+                .iter()
+                .map(|instruction| {
+                    if instruction.fields.len() > 0 {
+                        format!(
+                            "\tSelf::{}(..) => {},\n",
+                            instruction.name, instruction.opcode_num
+                        )
+                    } else {
+                        format!(
+                            "\tSelf::{} => {},\n",
+                            instruction.name, instruction.opcode_num
+                        )
+                    }
+                })
+                .collect::<String>()
+        ));
+
+    into_trait.push_component(method.into());
+
+    return into_trait;
 }
 
 fn generate_into_bytes_trait(instructions: &InstructionDetails) -> RustImplementation {

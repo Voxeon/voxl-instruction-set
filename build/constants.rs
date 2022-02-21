@@ -1,4 +1,10 @@
-pub const BASE_IMPORTS: [&'static str; 2] = ["use alloc::vec::Vec", "use alloc::vec"];
+pub const BASE_IMPORTS: [&'static str; 5] = [
+    "use alloc::vec::Vec",
+    "use alloc::vec",
+    "use alloc::format",
+    "use alloc::string::String",
+    "use alloc::string::ToString",
+];
 pub const INSTRUCTION_SET_PATH: &'static str = "base_instruction_set.csv";
 pub const OPCODE_OUTPUT_PATH: &'static str = "src/instruction.rs";
 pub const EXECUTE_OUTPUT_PATH: &'static str = "src/execute_instruction.rs";
