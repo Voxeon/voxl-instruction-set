@@ -280,7 +280,7 @@ impl From<u64> for Immediate {
 
 impl From<f64> for Immediate {
     fn from(n: f64) -> Self {
-        return Self::new(n.to_le_bytes());
+        return Self::new(n.to_le_bytes()).with_type(ImmediateType::Float);
     }
 }
 
